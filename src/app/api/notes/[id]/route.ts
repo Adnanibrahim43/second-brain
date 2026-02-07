@@ -1,43 +1,50 @@
-// src/app/api/notes/[id]/route.ts
+import { createClient } from "@supabase/supabase-js";
 import { NextResponse } from "next/server";
-import { db } from "@/lib/db";
 
-// DELETE a note
-export async function DELETE(
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
+const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
+
+// Note the new type definition for params: it is now a Promise
+export async function PATCH(
   req: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> } // Change 1: params is a Promise
 ) {
-  try {
-    // Await params for Next.js 15+ compatibility
-    const { id } = await Promise.resolve(params);
-    
-    await db.note.delete({
-      where: { id },
-    });
+  const supabase = createClient(supabaseUrl, supabaseKey);
 
-    return NextResponse.json({ message: "Note deleted" });
-  } catch (error) {
-    return NextResponse.json({ error: "Failed to delete" }, { status: 500 });
+  try {
+    // Change 2: You MUST await params before accessing .id
+    const { id } = await params; 
+    
+    const body = await req.json();
+    const { title, content, tags, type } = body;
+
+    const { data, error } = await supabase
+      .from("notes")
+      .update({ title, content, tags, type })
+      .eq("id", id)
+      .select()
+      .single();
+
+    if (error) throw error;
+    return NextResponse.json(data);
+
+  } catch (error: any) {
+    return NextResponse.json({ error: error.message }, { status: 500 });
   }
 }
 
-// UPDATE (Edit) a note
-export async function PATCH(
+// Do the same for DELETE if you have it in this file
+export async function DELETE(
   req: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
+  const supabase = createClient(supabaseUrl, supabaseKey);
   try {
-    const { id } = await Promise.resolve(params);
-    const body = await req.json();
-    const { title, content } = body;
-
-    const updatedNote = await db.note.update({
-      where: { id },
-      data: { title, content },
-    });
-
-    return NextResponse.json(updatedNote);
-  } catch (error) {
-    return NextResponse.json({ error: "Failed to update" }, { status: 500 });
+    const { id } = await params; // Await here too!
+    const { error } = await supabase.from("notes").delete().eq("id", id);
+    if (error) throw error;
+    return NextResponse.json({ success: true });
+  } catch (error: any) {
+    return NextResponse.json({ error: error.message }, { status: 500 });
   }
 }
