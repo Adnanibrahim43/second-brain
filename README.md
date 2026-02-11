@@ -14,7 +14,7 @@ An advanced Personal Knowledge Management (PKM) system built with **Next.js**, *
 - **AI Engine:** Google Generative AI SDK (Gemini 2.5 Flash)
 
 ## 🚀 Getting Started
-1. Clone the repo: `git clone https://github.com/YOUR_USERNAME/second-brain.git`
+1. Clone the repo: `git clone https://github.com/Adnanibrahim_43/second-brain.git`
 2. Install dependencies: `npm install`
 3. Setup `.env.local` with your Supabase and Gemini keys.
 4. Run locally: `npm run dev`
